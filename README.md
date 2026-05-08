@@ -18,7 +18,7 @@ A Django REST Framework backend for a Kanban-style task management application. 
 
 **1. Clone the repository**
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/GesaLoof/drf_kanmind
 cd drf_kanmind
 ```
 
