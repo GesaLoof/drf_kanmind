@@ -8,9 +8,12 @@ from rest_framework.authtoken.views import ObtainAuthToken
 
 
 class RegisterView(APIView):
+    """Register a new user and return an auth token."""
+
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Handle POST to create a new user and return token data."""
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
@@ -28,10 +31,13 @@ class RegisterView(APIView):
 
 
 class CustomLoginView(ObtainAuthToken):
+    """Login a user and return an auth token."""
+
     permission_classes = [AllowAny]
     serializer_class = CustomLoginSerializer
 
     def post(self, request):
+        """Handle POST to authenticate and return token data."""
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data["user"]
@@ -48,9 +54,12 @@ class CustomLoginView(ObtainAuthToken):
 
 
 class LogoutView(APIView):
+    """Delete the authenticated user's token."""
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        """Handle POST to delete the user's token."""
         request.user.auth_token.delete()
         return Response(
             {"detail": "Logout succesfuk. Token deleted."}, status=status.HTTP_200_OK

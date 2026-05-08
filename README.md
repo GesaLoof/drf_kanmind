@@ -250,7 +250,7 @@ CORS_ALLOWED_ORIGINS = [
 
 ```
 drf_kanmind/
-├── kanmind_app/          # Main project settings and URLs
+├── core/                 # Main project settings and URLs
 │   ├── settings.py
 │   └── urls.py
 ├── auth_app/             # User registration, login, logout
