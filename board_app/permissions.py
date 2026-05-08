@@ -1,5 +1,6 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS, IsAuthenticated
 
+
 class IsBoardOwnerOrMember(BasePermission):
     def has_object_permission(self, request, view, obj):
         # owner and members can do anything
@@ -7,7 +8,8 @@ class IsBoardOwnerOrMember(BasePermission):
             return True
         else:
             return False
-        
+
+
 class IsTaskBoardOwnerOrMember(BasePermission):
     def has_object_permission(self, request, view, obj):
         board = obj.board
