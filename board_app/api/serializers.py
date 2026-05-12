@@ -41,6 +41,9 @@ class BoardSerializer(serializers.ModelSerializer):
 
     def get_tasks_high_prio_count(self, obj):
         return obj.tasks.filter(priority="high").count()
+    
+    def get_member_count(self, obj):
+        return obj.members.count()
 
 
 class MemberSerializer(serializers.ModelSerializer):
@@ -131,9 +134,9 @@ class BoardUpdateSerializer(serializers.ModelSerializer):
 
 class TaskDetailSerializer(serializers.ModelSerializer):
     """Serializer for task retrieve action. Returns nested assignee and reviewer data."""
-
-    reviewer_id = MemberSerializer(read_only=True)
-    assignee_id = MemberSerializer(read_only=True)
+    
+    assignee = MemberSerializer(read_only=True)
+    reviewer = MemberSerializer(read_only=True)
     comments_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -145,17 +148,11 @@ class TaskDetailSerializer(serializers.ModelSerializer):
             "description",
             "status",
             "priority",
-            "assignee_id",
-            "reviewer_id",
+            "assignee",
+            "reviewer",
             "due_date",
             "comments_count",
         ]
-
-    def get_reviewer_id(self, obj):
-        return obj.reviewer.id if obj.reviewer else None
-
-    def get_assignee_id(self, obj):
-        return obj.assignee.id if obj.assignee else None
 
     def get_comments_count(self, obj):
         return obj.comments.count()
