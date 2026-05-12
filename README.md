@@ -18,7 +18,7 @@ A Django REST Framework backend for a Kanban-style task management application. 
 
 **1. Clone the repository**
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/GesaLoof/drf_kanmind
 cd drf_kanmind
 ```
 
@@ -73,9 +73,9 @@ The API will be available at `http://127.0.0.1:8000/`
 
 | Method | URL | Description | Auth required |
 |--------|-----|-------------|---------------|
-| POST | `/auth/register/` | Register a new user | No |
-| POST | `/auth/login/` | Login and receive token | No |
-| POST | `/auth/logout/` | Logout and invalidate token | Yes |
+| POST | `/api/register/` | Register a new user | No |
+| POST | `/api/login/` | Login and receive token | No |
+| POST | `/api/logout/` | Logout and invalidate token | Yes |
 
 **Register body:**
 ```json
@@ -198,7 +198,7 @@ The API will be available at `http://127.0.0.1:8000/`
 **Create comment body:**
 ```json
 {
-    "content": "Das ist ein Kommentar."
+    "content": "this is a comment"
 }
 ```
 
@@ -239,7 +239,7 @@ Allowed origins are configured in `settings.py`. For local frontend development 
 
 ```python
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+    "http://localhost:5500",
     "http://127.0.0.1:5500",
 ]
 ```
@@ -272,4 +272,4 @@ drf_kanmind/
 ```
 
 
-# the text in this README.md was ai generated and human proofread
+# the text in this README.md was claude generated and human proofread
