@@ -5,6 +5,11 @@ from rest_framework.exceptions import NotFound
 
 
 class BoardSerializer(serializers.ModelSerializer):
+    """
+    Serializer for board list and create actions.
+    Counts are calculated dynamically, members are write-only.
+    """
+
     member_count = serializers.SerializerMethodField()
     ticket_count = serializers.SerializerMethodField()
     tasks_to_do_count = serializers.SerializerMethodField()
@@ -27,20 +32,20 @@ class BoardSerializer(serializers.ModelSerializer):
             "members",
         ]
 
-    def get_member_count(self, obj):
-        return obj.members.count()
-
     def get_ticket_count(self, obj):
-        return 0  # replace with actual logic when you have a Ticket model
+        # total number of tasks on this board
+        return obj.tasks.count()
 
     def get_tasks_to_do_count(self, obj):
-        return 0  # replace with actual logic when you have a Task model
+        return obj.tasks.filter(status="to-do").count()
 
     def get_tasks_high_prio_count(self, obj):
-        return 0  # replace with actual logic when you have a Task model
+        return obj.tasks.filter(priority="high").count()
 
 
 class MemberSerializer(serializers.ModelSerializer):
+    """Serializes a user with their profile fullname. Used for nested member representations."""
+
     fullname = serializers.CharField(source="profile.fullname")
 
     class Meta:
@@ -49,8 +54,15 @@ class MemberSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    """
+    Serializer for task list and create actions.
+    Accepts assignee_id and reviewer_id as IDs for writing,
+    returns full nested user data for reading.
+    """
+
     assignee = MemberSerializer(read_only=True)
     reviewer = MemberSerializer(read_only=True)
+    # write-only fields that map to the assignee/reviewer FK via source
     assignee_id = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), write_only=True, source="assignee", allow_null=True
     )
@@ -77,9 +89,10 @@ class TaskSerializer(serializers.ModelSerializer):
         ]
 
     def get_comments_count(self, obj):
-        return 0  # replace with actual logic when you have a Comment model
+        return obj.comments.count()
 
     def validate_board(self, value):
+        """Raises 404 if the given board ID does not exist."""
         try:
             board = Board.objects.get(pk=value.id)
             return board
@@ -88,6 +101,8 @@ class TaskSerializer(serializers.ModelSerializer):
 
 
 class BoardDetailSerializer(serializers.ModelSerializer):
+    """Serializer for board detail (retrieve) action. Returns nested members and tasks."""
+
     owner_id = serializers.IntegerField(source="owner.id", read_only=True)
     members = MemberSerializer(many=True, read_only=True)
     tasks = TaskSerializer(many=True, read_only=True)
@@ -98,6 +113,11 @@ class BoardDetailSerializer(serializers.ModelSerializer):
 
 
 class BoardUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for board update (PATCH/PUT) actions.
+    Accepts member IDs for writing, returns full member data in response.
+    """
+
     owner_data = MemberSerializer(source="owner", read_only=True)
     members_data = MemberSerializer(source="members", many=True, read_only=True)
     members = serializers.PrimaryKeyRelatedField(
@@ -110,6 +130,8 @@ class BoardUpdateSerializer(serializers.ModelSerializer):
 
 
 class TaskDetailSerializer(serializers.ModelSerializer):
+    """Serializer for task retrieve action. Returns nested assignee and reviewer data."""
+
     reviewer_id = MemberSerializer(read_only=True)
     assignee_id = MemberSerializer(read_only=True)
     comments_count = serializers.SerializerMethodField()
@@ -136,10 +158,16 @@ class TaskDetailSerializer(serializers.ModelSerializer):
         return obj.assignee.id if obj.assignee else None
 
     def get_comments_count(self, obj):
-        return 0
+        return obj.comments.count()
 
 
 class TaskUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for task update (PATCH/PUT) actions.
+    Accepts assignee_id and reviewer_id as IDs for writing,
+    returns full nested user data in response.
+    """
+
     assignee = MemberSerializer(read_only=True)
     reviewer = MemberSerializer(read_only=True)
     assignee_id = serializers.PrimaryKeyRelatedField(
@@ -167,6 +195,8 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    """Serializer for comments. Author is set server-side and returned as a fullname string."""
+
     author = serializers.SerializerMethodField()
 
     class Meta:
@@ -175,6 +205,7 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ["author", "created_at", "task"]
 
     def get_author(self, obj):
+        """Returns the author's fullname, or None if their profile doesn't exist."""
         try:
             return obj.author.profile.fullname
         except:

@@ -62,5 +62,5 @@ class LogoutView(APIView):
         """Handle POST to delete the user's token."""
         request.user.auth_token.delete()
         return Response(
-            {"detail": "Logout succesfuk. Token deleted."}, status=status.HTTP_200_OK
+            {"detail": "Logout succesful. Token deleted."}, status=status.HTTP_200_OK
         )

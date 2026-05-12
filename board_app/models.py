@@ -3,6 +3,11 @@ from django.contrib.auth.models import User
 
 
 class Board(models.Model):
+    """
+    Represents a Kanban board.
+    A board has one owner and multiple members, and contains tasks.
+    """
+
     title = models.CharField(max_length=255)
     owner = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="owned_boards"
@@ -10,10 +15,16 @@ class Board(models.Model):
     members = models.ManyToManyField(User, related_name="boards", blank=True)
 
     def __str__(self):
-        return f"{self.title} ({self.category})"
+        return f"{self.title}"
 
 
 class Task(models.Model):
+    """
+    Represents a task on a board.
+    A task belongs to one board and can have an assignee and a reviewer.
+    Deleting a board cascades to its tasks. Deleting a user sets assignee/reviewer to null.
+    """
+
     STATUS_CHOICES = [
         ("to-do", "To Do"),
         ("in-progress", "In Progress"),
@@ -25,6 +36,7 @@ class Task(models.Model):
         ("medium", "Medium"),
         ("high", "High"),
     ]
+
     board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name="tasks")
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -50,6 +62,12 @@ class Task(models.Model):
 
 
 class Comment(models.Model):
+    """
+    Represents a comment on a task.
+    A comment belongs to one task and one author.
+    Deleting a task or author cascades to their comments.
+    """
+
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="comments")
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
     content = models.TextField()
