@@ -23,10 +23,7 @@ from board_app.permissions import IsBoardOwnerOrMember, IsTaskBoardOwnerOrMember
 
 
 class TestApiView(APIView):
-    """
-    A simple health check endpoint to verify the API is running.
-    Accessible without authentication.
-    """
+    """Health check endpoint, accessible without authentication."""
 
     permission_classes = [permissions.AllowAny]
 
@@ -36,33 +33,16 @@ class TestApiView(APIView):
 
 
 class BoardViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for managing boards.
-
-    Provides list, create, retrieve, update and delete actions.
-    - Any authenticated user can list all boards and create new ones.
-    - Only the board owner or a member can retrieve, update or delete a specific board.
-    - Different serializers are used depending on the action to control
-      which fields are included in the response.
-    """
+    """ViewSet for managing boards with list, create, retrieve, update, and delete actions."""
 
     def get_permissions(self):
-        """
-        Returns the appropriate permission classes based on the current action.
-        - list/create: only requires authentication
-        - all other actions: requires authentication AND board ownership/membership
-        """
+        """Sets permissions based on the action (list/create vs others)."""
         if self.action == "list" or self.action == "create":
             return [IsAuthenticated()]
         return [IsAuthenticated(), IsBoardOwnerOrMember()]
 
     def get_serializer_class(self):
-        """
-        Returns the appropriate serializer class based on the current action.
-        - retrieve: BoardDetailSerializer (includes nested members and tasks)
-        - update/partial_update: BoardUpdateSerializer (includes owner_data and members_data)
-        - all other actions: BoardSerializer (includes counts and owner_id)
-        """
+        """Returns the serializer class based on the action."""
         if self.action == "retrieve":
             return BoardDetailSerializer
         if self.action in ["update", "partial_update"]:
@@ -70,13 +50,7 @@ class BoardViewSet(viewsets.ModelViewSet):
         return BoardSerializer
 
     def get_object(self):
-        """
-        Retrieves a single board by primary key.
-        Raises a 404 if the board does not exist.
-        Raises a 403 if the user does not have permission to access it.
-        This override ensures a clear 403 is returned instead of a misleading 404
-        when the board exists but the user lacks permission.
-        """
+        """Retrieves a board by primary key, raising 404 or 403 as needed."""
         try:
             obj = Board.objects.get(pk=self.kwargs["pk"])
         except Board.DoesNotExist:
@@ -86,53 +60,28 @@ class BoardViewSet(viewsets.ModelViewSet):
         return obj
 
     def get_queryset(self):
-        """
-        Returns the appropriate queryset based on the current action.
-        - list: returns all boards (any authenticated user can see the board list)
-        - all other actions: returns only boards where the user is the owner or a member
-          .distinct() prevents duplicate results when a user is both owner and member
-        """
+        """Returns boards based on the action (all or user-specific)."""
         if self.action == "list":
             return Board.objects.all()
         user = self.request.user
         return Board.objects.filter(Q(owner=user) | Q(members=user)).distinct()
 
     def perform_create(self, serializer):
-        """
-        Sets the owner of the board to the currently authenticated user
-        before saving. This prevents the client from setting the owner manually.
-        """
+        """Sets the board owner to the authenticated user."""
         serializer.save(owner=self.request.user)
 
 
 class TaskViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for managing tasks.
-
-    Provides list, create, retrieve, update and delete actions.
-    - Any authenticated user can list all tasks.
-    - Only board owners or members can retrieve, update or delete a specific task.
-    - Only board owners or members can create a task for a given board.
-    - Different serializers are used depending on the action.
-    """
+    """ViewSet for managing tasks with list, create, retrieve, update, and delete actions."""
 
     def get_permissions(self):
-        """
-        Returns the appropriate permission classes based on the current action.
-        - list: only requires authentication
-        - all other actions: requires authentication AND board ownership/membership
-        """
+        """Sets permissions based on the action (list vs others)."""
         if self.action == "list":
             return [IsAuthenticated()]
         return [IsAuthenticated(), IsTaskBoardOwnerOrMember()]
 
     def get_serializer_class(self):
-        """
-        Returns the appropriate serializer class based on the current action.
-        - retrieve: TaskDetailSerializer (includes nested assignee and reviewer data)
-        - update/partial_update: TaskUpdateSerializer (handles write fields for assignee/reviewer)
-        - all other actions: TaskSerializer (standard task representation)
-        """
+        """Returns the serializer class based on the action."""
         if self.action == "retrieve":
             return TaskDetailSerializer
         if self.action in ["update", "partial_update"]:
@@ -140,11 +89,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         return TaskSerializer
 
     def get_object(self):
-        """
-        Retrieves a single task by primary key.
-        Raises a 404 if the task does not exist.
-        Raises a 403 if the user does not have permission to access it.
-        """
+        """Retrieves a task by primary key, raising 404 or 403 as needed."""
         try:
             obj = Task.objects.get(pk=self.kwargs["pk"])
         except Task.DoesNotExist:
@@ -154,15 +99,11 @@ class TaskViewSet(viewsets.ModelViewSet):
         return obj
 
     def get_queryset(self):
-        """Returns all tasks. Access control is handled by get_permissions and get_object."""
+        """Returns all tasks."""
         return Task.objects.all()
 
     def perform_create(self, serializer):
-        """
-        Validates that the currently authenticated user is a member or owner
-        of the board the task is being created for before saving.
-        Raises a 403 if the user is not a board member or owner.
-        """
+        """Validates board membership before creating a task."""
         board_id = serializer.validated_data.get("board").id
         board = Board.objects.get(pk=board_id)
 
@@ -177,19 +118,11 @@ class TaskViewSet(viewsets.ModelViewSet):
         serializer.save()
 
     def partial_update(self, request, *args, **kwargs):
-        """
-        Handles PATCH requests for partial task updates.
-        Overrides the default partial_update to return a full detailed response
-        using TaskDetailSerializer after saving, instead of just the updated fields.
-        refresh_from_db() ensures the instance has the latest data from the database
-        before serializing, particularly important for related fields like assignee
-        and reviewer.
-        """
+        """Handles PATCH requests and returns a detailed response."""
         instance = self.get_object()
         serializer = TaskUpdateSerializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            # Refresh to ensure related objects are properly loaded
             instance.refresh_from_db()
             response_serializer = TaskDetailSerializer(
                 instance, context={"request": request}
@@ -199,12 +132,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 
 class EmailCheckView(generics.RetrieveAPIView):
-    """
-    Checks whether a user with the given email address exists in the database.
-    The email is passed as a query parameter: /api/email-check/?email=x@x.com
-    Returns the user's data if found, or a 404 if not found.
-    Returns a 400 if the email query parameter is missing.
-    """
+    """Checks if a user with the given email exists via query parameters."""
 
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = MemberSerializer
@@ -218,10 +146,7 @@ class EmailCheckView(generics.RetrieveAPIView):
         return obj
 
     def get(self, request, *args, **kwargs):
-        """
-        Validates that the email query parameter is present before
-        attempting to retrieve the user.
-        """
+        """Validates the email query parameter before retrieving the user."""
         if not request.query_params.get("email"):
             return Response(
                 {"message": "Email query parameter is required."},
@@ -231,10 +156,7 @@ class EmailCheckView(generics.RetrieveAPIView):
 
 
 class AssignedToMeView(generics.ListAPIView):
-    """
-    Returns all tasks where the currently authenticated user is the assignee.
-    Useful for a personal task dashboard view.
-    """
+    """Lists tasks assigned to the authenticated user."""
 
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = TaskSerializer
@@ -246,10 +168,7 @@ class AssignedToMeView(generics.ListAPIView):
 
 
 class ReviewingView(generics.ListAPIView):
-    """
-    Returns all tasks where the currently authenticated user is the reviewer.
-    Useful for showing tasks that require the user's review.
-    """
+    """Lists tasks where the user is the reviewer."""
 
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = TaskSerializer
@@ -261,20 +180,13 @@ class ReviewingView(generics.ListAPIView):
 
 
 class CommentListCreateView(generics.ListCreateAPIView):
-    """
-    Lists all comments for a specific task and allows creating new ones.
-    The task is identified by its primary key in the URL.
-    Returns a 404 if the task does not exist.
-    """
+    """Lists and creates comments for a specific task."""
 
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Returns all comments for the task identified by the pk in the URL.
-        Raises a 404 if the task does not exist.
-        """
+        """Returns comments for the task identified by the pk in the URL."""
         task_id = self.kwargs["pk"]
         try:
             task = Task.objects.get(pk=task_id)
@@ -283,11 +195,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
         return Comment.objects.filter(task=task)
 
     def perform_create(self, serializer):
-        """
-        Sets the author to the currently authenticated user and links
-        the comment to the task identified by the pk in the URL before saving.
-        Raises a 404 if the task does not exist.
-        """
+        """Links the comment to the task and sets the author."""
         task_id = self.kwargs["pk"]
         try:
             task = Task.objects.get(pk=task_id)
