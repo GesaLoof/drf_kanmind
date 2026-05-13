@@ -183,7 +183,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
     """Lists and creates comments for a specific task."""
 
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsTaskBoardOwnerOrMember]
 
     def get_queryset(self):
         """Returns comments for the task identified by the pk in the URL."""
@@ -205,7 +205,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
 class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsTaskBoardOwnerOrMember]
 
     def get_object(self):
         task_pk = self.kwargs["task_pk"]
