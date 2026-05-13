@@ -17,9 +17,11 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "fullname", "email", "password", "repeated_password"]
 
     def validate(self, data):
-        """Ensure password and repeated_password match."""
+        """Ensure passwords match and email is not already in use."""
         if data["password"] != data["repeated_password"]:
             raise serializers.ValidationError({"password": "Passwords do not match."})
+        if User.objects.filter(email=data["email"]).exists():
+            raise serializers.ValidationError({"email": "A user with this email already exists."})
         return data
 
     def create(self, validated_data):

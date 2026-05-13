@@ -187,7 +187,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         """Returns comments for the task identified by the pk in the URL."""
-        task_id = self.kwargs["pk"]
+        task_id = self.kwargs["task_pk"]
         try:
             task = Task.objects.get(pk=task_id)
         except Task.DoesNotExist:
@@ -196,9 +196,22 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         """Links the comment to the task and sets the author."""
-        task_id = self.kwargs["pk"]
+        task_id = self.kwargs["task_pk"]
         try:
             task = Task.objects.get(pk=task_id)
         except Task.DoesNotExist:
             raise NotFound("Task not found.")
         serializer.save(author=self.request.user, task=task)
+
+class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        task_pk = self.kwargs["task_pk"]
+        pk = self.kwargs["pk"]
+        try:
+            comment = Comment.objects.get(pk=pk, task_id=task_pk)
+        except Comment.DoesNotExist:
+            raise NotFound("Comment not found.")
+        return comment
