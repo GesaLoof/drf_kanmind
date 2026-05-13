@@ -22,48 +22,35 @@ git clone https://github.com/GesaLoof/drf_kanmind
 cd drf_kanmind
 ```
 
-**2. Create and activate a virtual environment**
+**2. Create and activate a virtual environment (use environment manager of choice)**
 ```bash
-micromamba create -n django python=3.13
+micromamba create -n my_env_name -f requirements.txt -c conda-forge
 micromamba activate django
 ```
 
-**3. Install dependencies**
-```bash
-pip install django djangorestframework django-cors-headers
-```
-
-**4. Create a `.env` file** in the project root:
+**3. Create a `.env` file** in the project root:
 ```
 SECRET_KEY=your-secret-key-here
 DEBUG=True
 ```
 
-**5. Run migrations**
+
+**4. Run migrations**
 ```bash
 python manage.py migrate
 ```
 
-**6. Create a superuser (optional)**
+**5. Create a superuser (optional)**
 ```bash
 python manage.py createsuperuser
 ```
 
-**7. Start the development server**
+**6. Start the development server**
 ```bash
 python manage.py runserver
 ```
 
 The API will be available at `http://127.0.0.1:8000/`
-
----
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `SECRET_KEY` | Django secret key |
-| `DEBUG` | Set to `True` for development, `False` for production |
 
 ---
 
@@ -73,7 +60,7 @@ The API will be available at `http://127.0.0.1:8000/`
 
 | Method | URL | Description | Auth required |
 |--------|-----|-------------|---------------|
-| POST | `/api/register/` | Register a new user | No |
+| POST | `/api/registration/` | Register a new user | No |
 | POST | `/api/login/` | Login and receive token | No |
 | POST | `/api/logout/` | Logout and invalidate token | Yes |
 
@@ -272,4 +259,4 @@ drf_kanmind/
 ```
 
 
-# the text in this README.md was claude generated and human proofread
+the text in this README.md was claude generated and human proofread
