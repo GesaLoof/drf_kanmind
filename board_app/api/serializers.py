@@ -73,6 +73,7 @@ class TaskSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(), write_only=True, source="reviewer", allow_null=True
     )
     comments_count = serializers.SerializerMethodField()
+    board = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = Task
@@ -97,8 +98,7 @@ class TaskSerializer(serializers.ModelSerializer):
     def validate_board(self, value):
         """Raises 404 if the given board ID does not exist."""
         try:
-            board = Board.objects.get(pk=value.id)
-            return board
+            return Board.objects.get(pk=value)
         except Board.DoesNotExist:
             raise NotFound("Board not found.")
 
