@@ -22,10 +22,11 @@ git clone https://github.com/GesaLoof/drf_kanmind
 cd drf_kanmind
 ```
 
-**2. Create and activate a virtual environment (use environment manager of choice)**
+**2. Create and activate a virtual environment**
 ```bash
-micromamba create -n my_env_name -f requirements.txt -c conda-forge
-micromamba activate django
+python -m venv my_new_environment
+source my_new_environment/bin/activate
+pip install -r requirements.txt
 ```
 
 **3. Create a `.env` file** in the project root:
