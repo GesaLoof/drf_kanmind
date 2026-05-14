@@ -65,7 +65,6 @@ class TaskSerializer(serializers.ModelSerializer):
 
     assignee = MemberSerializer(read_only=True)
     reviewer = MemberSerializer(read_only=True)
-    # write-only fields that map to the assignee/reviewer FK via source
     assignee_id = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), write_only=True, source="assignee", allow_null=True
     )
@@ -73,7 +72,7 @@ class TaskSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(), write_only=True, source="reviewer", allow_null=True
     )
     comments_count = serializers.SerializerMethodField()
-    board = serializers.IntegerField(write_only=True)
+    board = serializers.PrimaryKeyRelatedField(queryset=Board.objects.all())
 
     class Meta:
         model = Task
@@ -98,7 +97,7 @@ class TaskSerializer(serializers.ModelSerializer):
     def validate_board(self, value):
         """Raises 404 if the given board ID does not exist."""
         try:
-            return Board.objects.get(pk=value)
+            return Board.objects.get(pk=value.id)
         except Board.DoesNotExist:
             raise NotFound("Board not found.")
 
