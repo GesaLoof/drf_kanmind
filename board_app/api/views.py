@@ -103,7 +103,10 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Task.objects.all()
 
     def perform_create(self, serializer):
-        """Validates board membership before creating a task."""
+        """
+        Validates that the requesting user is a board member before creating a task, 
+        since object-level permissions cannot be checked at creation time when no object yet exists.
+         """
         board_id = serializer.validated_data.get("board").id
         board = Board.objects.get(pk=board_id)
 
