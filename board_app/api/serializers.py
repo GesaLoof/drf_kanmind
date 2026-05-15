@@ -94,12 +94,11 @@ class TaskSerializer(serializers.ModelSerializer):
     def get_comments_count(self, obj):
         return obj.comments.count()
 
-    def validate_board(self, value):
-        """Raises 404 if the given board ID does not exist."""
-        try:
-            return Board.objects.get(pk=value.id)
-        except Board.DoesNotExist:
+    def to_internal_value(self, data):
+        board_id = data.get("board")
+        if board_id and not Board.objects.filter(pk=board_id).exists():
             raise NotFound("Board not found.")
+        return super().to_internal_value(data)
 
 
 class BoardDetailSerializer(serializers.ModelSerializer):
